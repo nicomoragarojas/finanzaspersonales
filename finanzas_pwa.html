@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#080a0f">
+<title>Mis Finanzas</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080a0f;
+  --s1: #0f1219;
+  --s2: #161b26;
+  --s3: #1e2536;
+  --bd: #2a3349;
+  --txt: #e2e8f8;
+  --txt2: #7a8aaa;
+  --txt3: #3d4d6a;
+  --g: #22c984;
+  --r: #ff4d6d;
+  --b: #4d8fff;
+  --y: #ffd166;
+  --p: #b388ff;
+  --o: #ff8c42;
+  --syne: 'Syne', sans-serif;
+  --mono: 'IBM Plex Mono', monospace;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; background: var(--bg); color: var(--txt); font-family: var(--syne); }
+
+/* ── APP SHELL ── */
+#app { height: 100dvh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+
+/* ── VIEWS ── */
+.view { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; padding-bottom: calc(72px + var(--safe-bottom)); display: none; flex-direction: column; }
+.view.active { display: flex; }
+
+/* ── BOTTOM NAV ── */
+.nav { position: absolute; bottom: 0; left: 0; right: 0; height: calc(60px + var(--safe-bottom)); background: rgba(8,10,15,.95); backdrop-filter: blur(20px); border-top: 1px solid var(--bd); display: flex; padding-bottom: var(--safe-bottom); z-index: 100; }
+.nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-family: var(--mono); font-size: 9px; color: var(--txt3); cursor: pointer; transition: color .2s; border: none; background: none; padding: 0; }
+.nav-btn.active { color: var(--b); }
+.nav-btn svg { width: 22px; height: 22px; transition: transform .2s; }
+.nav-btn.active svg { transform: translateY(-2px); }
+
+/* ── SECTION HEADER ── */
+.sh { padding: 20px 20px 12px; }
+.sh-label { font-family: var(--mono); font-size: 10px; color: var(--txt3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.sh-title { font-size: 24px; font-weight: 800; letter-spacing: -0.5px; }
+
+/* ── HOME VIEW ── */
+.hero-card {
+  margin: 16px 16px 0;
+  background: linear-gradient(135deg, #0f1a35 0%, #0a1220 60%, #0f1a35 100%);
+  border: 1px solid var(--bd);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-card::before {
+  content: '';
+  position: absolute;
+  top: -40px; right: -40px;
+  width: 160px; height: 160px;
+  background: radial-gradient(circle, rgba(77,143,255,.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-label { font-family: var(--mono); font-size: 10px; color: var(--txt3); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.hero-amount { font-family: var(--mono); font-size: 38px; font-weight: 500; color: var(--g); letter-spacing: -1px; line-height: 1; }
+.hero-amount.warn { color: var(--y); }
+.hero-amount.danger { color: var(--r); }
+.hero-sub { font-family: var(--mono); font-size: 11px; color: var(--txt2); margin-top: 8px; }
+.hero-row { display: flex; gap: 12px; margin-top: 16px; }
+.hero-pill { flex: 1; background: rgba(255,255,255,.04); border: 1px solid var(--bd); border-radius: 10px; padding: 10px 12px; }
+.hero-pill-label { font-family: var(--mono); font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
+.hero-pill-val { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+
+/* ── QUICK ADD ── */
+.qadd-btn {
+  margin: 14px 16px 0;
+  background: var(--b);
+  border: none;
+  border-radius: 14px;
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: var(--syne);
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: transform .15s, filter .15s;
+  width: calc(100% - 32px);
+}
+.qadd-btn:active { transform: scale(.97); filter: brightness(.9); }
+
+/* ── STATS ROW ── */
+.stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 16px 0; }
+.stat-card { background: var(--s1); border: 1px solid var(--bd); border-radius: 14px; padding: 14px 16px; }
+.stat-label { font-family: var(--mono); font-size: 9px; color: var(--txt3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.stat-val { font-family: var(--mono); font-size: 18px; font-weight: 500; }
+.stat-sub { font-family: var(--mono); font-size: 10px; color: var(--txt3); margin-top: 3px; }
+
+/* ── FACTURACIÓN PROYECTADA ── */
+.factura-card { margin: 12px 16px 0; background: var(--s1); border: 1px solid var(--bd); border-radius: 16px; overflow: hidden; }
+.factura-head { padding: 14px 16px 10px; display: flex; justify-content: space-between; align-items: center; }
+.factura-title { font-family: var(--mono); font-size: 10px; color: var(--txt2); text-transform: uppercase; letter-spacing: .5px; }
+.factura-total { font-family: var(--mono); font-size: 18px; font-weight: 500; color: var(--y); }
+.factura-row { padding: 8px 16px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(42,51,73,.5); }
+.factura-row-label { font-size: 12px; color: var(--txt2); }
+.factura-row-val { font-family: var(--mono); font-size: 12px; }
+
+/* ── RECENT TXS ── */
+.section-title { font-family: var(--mono); font-size: 10px; color: var(--txt3); text-transform: uppercase; letter-spacing: .7px; padding: 14px 16px 8px; }
+.tx-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+.tx-item { background: var(--s1); border: 1px solid var(--bd); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; }
+.tx-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.tx-info { flex: 1; min-width: 0; }
+.tx-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tx-meta { font-family: var(--mono); font-size: 10px; color: var(--txt3); margin-top: 2px; }
+.tx-amount { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--r); white-space: nowrap; flex-shrink: 0; }
+.tx-amount.cuota { color: var(--y); }
+
+/* ── ADD GASTO MODAL ── */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(8px); z-index: 200; display: none; align-items: flex-end; }
+.modal-overlay.open { display: flex; }
+.modal { background: var(--s1); border: 1px solid var(--bd); border-radius: 24px 24px 0 0; padding: 20px 20px calc(24px + var(--safe-bottom)); width: 100%; max-height: 92dvh; overflow-y: auto; animation: slideUp .3s cubic-bezier(.32,1,.45,1); }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+.modal-handle { width: 36px; height: 4px; background: var(--bd); border-radius: 2px; margin: 0 auto 20px; }
+.modal-title { font-size: 20px; font-weight: 800; margin-bottom: 20px; }
+
+.field { margin-bottom: 14px; }
+.field-label { font-family: var(--mono); font-size: 10px; color: var(--txt3); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; display: block; }
+.field input, .field select { width: 100%; background: var(--s2); border: 1px solid var(--bd); border-radius: 10px; padding: 12px 14px; font-family: var(--syne); font-size: 15px; color: var(--txt); outline: none; transition: border-color .2s; -webkit-appearance: none; }
+.field input:focus, .field select:focus { border-color: var(--b); }
+.field input[type="number"] { font-family: var(--mono); font-size: 22px; }
+
+.amount-display { font-family: var(--mono); font-size: 40px; font-weight: 500; color: var(--g); text-align: center; padding: 10px 0 16px; letter-spacing: -1px; min-height: 64px; }
+
+.cat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 14px; }
+.cat-opt { background: var(--s2); border: 1.5px solid var(--bd); border-radius: 10px; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; transition: all .15s; }
+.cat-opt.sel { border-color: var(--b); background: rgba(77,143,255,.12); }
+.cat-opt-icon { font-size: 20px; }
+.cat-opt-label { font-family: var(--mono); font-size: 9px; color: var(--txt3); text-align: center; }
+.cat-opt.sel .cat-opt-label { color: var(--b); }
+
+.cuota-row { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.toggle-sw { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+.toggle-sw input { opacity: 0; width: 0; height: 0; position: absolute; }
+.toggle-sw .slider { position: absolute; inset: 0; background: var(--s3); border-radius: 12px; cursor: pointer; transition: .2s; border: 1px solid var(--bd); }
+.toggle-sw input:checked + .slider { background: var(--b); border-color: var(--b); }
+.toggle-sw .slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 2px; top: 2px; background: #fff; border-radius: 50%; transition: .2s; }
+.toggle-sw input:checked + .slider::before { transform: translateX(20px); }
+.toggle-label { font-size: 13px; color: var(--txt2); }
+
+.cuota-config { display: none; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+.cuota-config.show { display: grid; }
+
+.btn-primary { width: 100%; background: var(--b); border: none; border-radius: 12px; padding: 16px; font-family: var(--syne); font-size: 16px; font-weight: 700; color: #fff; cursor: pointer; transition: transform .15s, filter .15s; }
+.btn-primary:active { transform: scale(.98); filter: brightness(.9); }
+.btn-secondary { width: 100%; background: transparent; border: 1px solid var(--bd); border-radius: 12px; padding: 14px; font-family: var(--syne); font-size: 14px; color: var(--txt2); cursor: pointer; margin-top: 8px; }
+
+/* ── GASTOS VIEW ── */
+.month-nav { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px 8px; }
+.month-label { font-size: 18px; font-weight: 700; }
+.month-arr { background: var(--s2); border: 1px solid var(--bd); border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 16px; color: var(--txt2); }
+
+.budget-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.budget-item { background: var(--s1); border: 1px solid var(--bd); border-radius: 14px; padding: 14px 16px; }
+.budget-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.budget-icon { font-size: 20px; }
+.budget-name { font-size: 13px; font-weight: 600; flex: 1; }
+.budget-amounts { font-family: var(--mono); font-size: 12px; color: var(--txt2); text-align: right; }
+.budget-amounts span { color: var(--txt); }
+.progress-bar { height: 6px; background: var(--s3); border-radius: 3px; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width .4s ease; }
+
+/* ── CUOTAS VIEW ── */
+.cuotas-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+.cuota-item { background: var(--s1); border: 1px solid var(--bd); border-radius: 14px; padding: 14px 16px; }
+.cuota-item-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.cuota-item-name { font-size: 13px; font-weight: 600; }
+.cuota-item-date { font-family: var(--mono); font-size: 10px; color: var(--txt3); margin-top: 2px; }
+.cuota-badge { font-family: var(--mono); font-size: 11px; padding: 3px 8px; border-radius: 6px; background: rgba(255,209,102,.12); color: var(--y); border: 1px solid rgba(255,209,102,.2); }
+.cuota-progress-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.cuota-progress-label { font-family: var(--mono); font-size: 10px; color: var(--txt3); }
+.cuota-progress-val { font-family: var(--mono); font-size: 12px; color: var(--txt2); }
+.cuota-next { font-family: var(--mono); font-size: 11px; color: var(--txt2); margin-top: 6px; }
+.cuota-next strong { color: var(--y); }
+.delete-btn { background: none; border: none; color: var(--txt3); cursor: pointer; font-size: 16px; padding: 2px 6px; }
+
+/* ── CONFIG VIEW ── */
+.config-section { padding: 0 16px 12px; }
+.config-card { background: var(--s1); border: 1px solid var(--bd); border-radius: 14px; overflow: hidden; }
+.config-row { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid rgba(42,51,73,.5); gap: 12px; }
+.config-row:last-child { border-bottom: none; }
+.config-row-icon { font-size: 18px; width: 28px; text-align: center; flex-shrink: 0; }
+.config-row-info { flex: 1; }
+.config-row-label { font-size: 13px; font-weight: 600; }
+.config-row-sub { font-family: var(--mono); font-size: 10px; color: var(--txt3); margin-top: 2px; }
+.config-row-right { font-family: var(--mono); font-size: 13px; color: var(--b); cursor: pointer; }
+.config-input { background: var(--s2); border: 1px solid var(--bd); border-radius: 8px; padding: 6px 10px; font-family: var(--mono); font-size: 13px; color: var(--txt); width: 100px; text-align: right; outline: none; }
+.config-input:focus { border-color: var(--b); }
+
+.budget-config-list { padding: 0 16px; display: flex; flex-direction: column; gap: 8px; }
+.budget-config-item { background: var(--s1); border: 1px solid var(--bd); border-radius: 12px; padding: 12px 14px; display: flex; align-items: center; gap: 10px; }
+.bci-icon { font-size: 18px; width: 26px; text-align: center; }
+.bci-name { font-size: 13px; font-weight: 600; flex: 1; }
+.bci-input { background: var(--s2); border: 1px solid var(--bd); border-radius: 8px; padding: 7px 10px; font-family: var(--mono); font-size: 13px; color: var(--g); width: 110px; text-align: right; outline: none; }
+.bci-input:focus { border-color: var(--g); }
+
+/* ── EXPORT ── */
+.export-btn { margin: 12px 16px 0; background: var(--s2); border: 1px solid var(--bd); border-radius: 12px; padding: 14px 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; width: calc(100% - 32px); color: var(--txt); font-family: var(--syne); font-size: 14px; font-weight: 600; }
+.export-btn:active { filter: brightness(1.2); }
+
+/* ── EMPTY STATE ── */
+.empty { text-align: center; padding: 48px 32px; }
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-title { font-size: 16px; font-weight: 700; color: var(--txt2); margin-bottom: 6px; }
+.empty-sub { font-family: var(--mono); font-size: 11px; color: var(--txt3); }
+
+/* ── TOAST ── */
+.toast { position: fixed; bottom: calc(76px + var(--safe-bottom)); left: 16px; right: 16px; background: var(--g); color: #000; padding: 12px 16px; border-radius: 12px; font-weight: 700; font-size: 13px; text-align: center; z-index: 500; opacity: 0; transform: translateY(10px); transition: all .3s; pointer-events: none; }
+.toast.show { opacity: 1; transform: translateY(0); }
+
+/* ── UTILITIES ── */
+.spacer { height: 12px; }
+.tag { display: inline-block; font-family: var(--mono); font-size: 10px; padding: 2px 7px; border-radius: 5px; }
+.tag.tc { background: rgba(77,143,255,.15); color: var(--b); border: 1px solid rgba(77,143,255,.2); }
+.tag.db { background: rgba(34,201,132,.15); color: var(--g); border: 1px solid rgba(34,201,132,.2); }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ════════════════ HOME VIEW ════════════════ -->
+  <div class="view active" id="view-home">
+    <div class="sh">
+      <div class="sh-label" id="home-date">—</div>
+      <div class="sh-title">Mis Finanzas</div>
+    </div>
+
+    <!-- Hero: dinero disponible -->
+    <div class="hero-card">
+      <div class="hero-label">Dinero disponible estimado</div>
+      <div class="hero-amount" id="hero-disponible">$0</div>
+      <div class="hero-sub" id="hero-sub">Saldo débito − deuda TC acumulada</div>
+      <div class="hero-row">
+        <div class="hero-pill">
+          <div class="hero-pill-label">Saldo débito</div>
+          <div class="hero-pill-val" id="pill-saldo" style="color:var(--g)">$0</div>
+        </div>
+        <div class="hero-pill">
+          <div class="hero-pill-label">TC acumulado</div>
+          <div class="hero-pill-val" id="pill-tc" style="color:var(--r)">$0</div>
+        </div>
+        <div class="hero-pill">
+          <div class="hero-pill-label">Cierre aprox.</div>
+          <div class="hero-pill-val" id="pill-cierre" style="color:var(--txt2)">—</div>
+        </div>
+      </div>
+    </div>
+
+    <button class="qadd-btn" onclick="openModal()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="20" height="20"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      Registrar gasto
+    </button>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Gastado este mes</div>
+        <div class="stat-val" id="stat-mes" style="color:var(--r)">$0</div>
+        <div class="stat-sub" id="stat-mes-sub">de $0 presupuestado</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Próxima facturación</div>
+        <div class="stat-val" id="stat-factura" style="color:var(--y)">$0</div>
+        <div class="stat-sub" id="stat-factura-sub">incl. cuotas</div>
+      </div>
+    </div>
+
+    <!-- Facturación proyectada -->
+    <div class="factura-card" id="factura-card">
+      <div class="factura-head">
+        <span class="factura-title">Proyección facturación TC</span>
+        <span class="factura-total" id="factura-total">$0</span>
+      </div>
+      <div class="factura-row">
+        <span class="factura-row-label">Gastos del mes</span>
+        <span class="factura-row-val" id="fac-gastos">$0</span>
+      </div>
+      <div class="factura-row">
+        <span class="factura-row-label">Cuotas que caen este mes</span>
+        <span class="factura-row-val" id="fac-cuotas" style="color:var(--y)">$0</span>
+      </div>
+    </div>
+
+    <div class="section-title" id="recent-title">Últimos gastos</div>
+    <div class="tx-list" id="recent-list"></div>
+    <div class="spacer"></div>
+  </div>
+
+  <!-- ════════════════ GASTOS VIEW ════════════════ -->
+  <div class="view" id="view-gastos">
+    <div class="month-nav">
+      <div class="month-arr" onclick="changeMonth(-1)">‹</div>
+      <div class="month-label" id="month-label">—</div>
+      <div class="month-arr" onclick="changeMonth(1)">›</div>
+    </div>
+    <div class="budget-list" id="budget-list"></div>
+    <div class="spacer"></div>
+  </div>
+
+  <!-- ════════════════ CUOTAS VIEW ════════════════ -->
+  <div class="view" id="view-cuotas">
+    <div class="sh">
+      <div class="sh-label">Compromisos</div>
+      <div class="sh-title">Cuotas activas</div>
+    </div>
+    <div class="cuotas-list" id="cuotas-list"></div>
+    <div class="spacer"></div>
+  </div>
+
+  <!-- ════════════════ CONFIG VIEW ════════════════ -->
+  <div class="view" id="view-config">
+    <div class="sh">
+      <div class="sh-label">Ajustes</div>
+      <div class="sh-title">Configuración</div>
+    </div>
+
+    <div class="config-section">
+      <div class="section-title" style="padding:0 0 8px">Cuenta</div>
+      <div class="config-card">
+        <div class="config-row">
+          <div class="config-row-icon">🏦</div>
+          <div class="config-row-info">
+            <div class="config-row-label">Saldo débito actual</div>
+            <div class="config-row-sub">Actualiza cuando lo revisas en el banco</div>
+          </div>
+          <input class="config-input" type="text" id="cfg-saldo" placeholder="0" oninput="updateSaldo(this.value)" inputmode="numeric">
+        </div>
+        <div class="config-row">
+          <div class="config-row-icon">📅</div>
+          <div class="config-row-info">
+            <div class="config-row-label">Día de cierre TC</div>
+            <div class="config-row-sub">Día del mes en que cierra tu tarjeta</div>
+          </div>
+          <input class="config-input" type="number" id="cfg-cierre" placeholder="20" min="1" max="31" oninput="updateCierre(this.value)" style="width:60px">
+        </div>
+        <div class="config-row">
+          <div class="config-row-icon">💰</div>
+          <div class="config-row-info">
+            <div class="config-row-label">Presupuesto total / mes</div>
+            <div class="config-row-sub">Gasto real máximo mensual</div>
+          </div>
+          <input class="config-input" type="text" id="cfg-presupuesto" placeholder="400000" oninput="updatePresupuesto(this.value)" inputmode="numeric">
+        </div>
+      </div>
+    </div>
+
+    <div class="config-section">
+      <div class="section-title" style="padding:0 0 8px">Presupuesto por categoría</div>
+      <div class="budget-config-list" id="budget-config-list"></div>
+    </div>
+
+    <div class="config-section">
+      <div class="section-title" style="padding:0 0 8px">Datos</div>
+      <div class="config-card">
+        <div class="config-row" onclick="exportJSON()" style="cursor:pointer">
+          <div class="config-row-icon">📤</div>
+          <div class="config-row-info">
+            <div class="config-row-label">Exportar mes actual</div>
+            <div class="config-row-sub">Compatible con dashboard histórico</div>
+          </div>
+          <div class="config-row-right">›</div>
+        </div>
+        <div class="config-row" onclick="resetMonth()" style="cursor:pointer">
+          <div class="config-row-icon">🔄</div>
+          <div class="config-row-info">
+            <div class="config-row-label">Cerrar mes y reiniciar</div>
+            <div class="config-row-sub">Archiva el mes actual y empieza nuevo</div>
+          </div>
+          <div class="config-row-right" style="color:var(--r)">›</div>
+        </div>
+      </div>
+    </div>
+    <div class="spacer"></div>
+  </div>
+
+  <!-- ════════════════ BOTTOM NAV ════════════════ -->
+  <nav class="nav">
+    <button class="nav-btn active" onclick="switchView('home',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9,22 9,12 15,12 15,22"/></svg>
+      Inicio
+    </button>
+    <button class="nav-btn" onclick="switchView('gastos',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Gastos
+    </button>
+    <button class="nav-btn" onclick="switchView('cuotas',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+      Cuotas
+    </button>
+    <button class="nav-btn" onclick="switchView('config',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      Ajustes
+    </button>
+  </nav>
+
+  <!-- ════════════════ ADD MODAL ════════════════ -->
+  <div class="modal-overlay" id="modal" onclick="handleOverlayClick(event)">
+    <div class="modal" id="modal-inner">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Nuevo gasto</div>
+
+      <div class="amount-display" id="amount-display">$0</div>
+
+      <div class="field">
+        <label class="field-label">Monto (CLP)</label>
+        <input type="number" id="inp-monto" placeholder="0" inputmode="numeric" oninput="updateAmountDisplay(this.value)">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Descripción</label>
+        <input type="text" id="inp-desc" placeholder="Ej: Jumbo, COPEC, Restaurant...">
+      </div>
+
+      <div class="field">
+        <label class="field-label">Categoría</label>
+        <div class="cat-grid" id="cat-grid"></div>
+      </div>
+
+      <div class="cuota-row">
+        <label class="toggle-sw">
+          <input type="checkbox" id="tog-cuota" onchange="toggleCuota(this.checked)">
+          <span class="slider"></span>
+        </label>
+        <span class="toggle-label">Compra en cuotas</span>
+      </div>
+
+      <div class="cuota-config" id="cuota-config">
+        <div class="field" style="margin:0">
+          <label class="field-label">N° cuotas</label>
+          <input type="number" id="inp-ncuotas" placeholder="12" min="2" max="48" inputmode="numeric">
+        </div>
+        <div class="field" style="margin:0">
+          <label class="field-label">Cuota N°</label>
+          <input type="number" id="inp-cuota-actual" placeholder="1" min="1" max="48" inputmode="numeric">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label">Tarjeta</label>
+        <select id="inp-tarjeta">
+          <option value="tc">💳 Tarjeta de Crédito</option>
+          <option value="db">🏦 Débito</option>
+        </select>
+      </div>
+
+      <button class="btn-primary" onclick="saveGasto()">Guardar gasto</button>
+      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+// ─── CATEGORÍAS ────────────────────────────────────────────────
+const CATS = [
+  {id:'comida',    label:'Comida',      icon:'🍔', color:'#ff8c42'},
+  {id:'super',     label:'Supermercado',icon:'🛒', color:'#4ff7b0'},
+  {id:'bencina',   label:'Bencina',     icon:'⛽', color:'#ffd166'},
+  {id:'transporte',label:'Transporte',  icon:'🚗', color:'#4d8fff'},
+  {id:'salud',     label:'Salud',       icon:'💊', color:'#ff4d6d'},
+  {id:'entret',    label:'Entret.',     icon:'🎮', color:'#b388ff'},
+  {id:'ropa',      label:'Ropa',        icon:'👕', color:'#f472b6'},
+  {id:'online',    label:'Online',      icon:'📦', color:'#60a5fa'},
+  {id:'servicios', label:'Servicios',   icon:'💡', color:'#94a3b8'},
+  {id:'deporte',   label:'Deporte',     icon:'🏃', color:'#34d399'},
+  {id:'viajes',    label:'Viajes',      icon:'✈️', color:'#22d3ee'},
+  {id:'otros',     label:'Otros',       icon:'📋', color:'#6b7280'},
+];
+
+// ─── STATE ────────────────────────────────────────────────────
+const DEFAULT_STATE = {
+  saldoDebito: 0,
+  diaCierre: 20,
+  presupuestoTotal: 400000,
+  budgets: {comida:80000,super:60000,bencina:80000,transporte:20000,salud:15000,entret:15000,ropa:30000,online:30000,servicios:20000,deporte:10000,viajes:0,otros:20000},
+  gastos: [],   // {id, fecha, desc, cat, monto, tarjeta, cuota:{n,total,montoTotal}}
+  cuotas: [],   // {id, nombre, montoTotal, cuotaAct, nCuotas, montoCuota, fecha}
+  archivedMonths: [],
+};
+
+let S = load();
+
+function load() {
+  try { return {...DEFAULT_STATE, ...JSON.parse(localStorage.getItem('finanzas_pwa') || '{}')}; }
+  catch { return {...DEFAULT_STATE}; }
+}
+function save() { localStorage.setItem('finanzas_pwa', JSON.stringify(S)); }
+
+// ─── VIEWS ────────────────────────────────────────────────────
+let currentView = 'home';
+let viewMonth = new Date();
+
+function switchView(v, btn) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  if (btn) btn.classList.add('active');
+  currentView = v;
+  if (v === 'home') renderHome();
+  if (v === 'gastos') renderGastos();
+  if (v === 'cuotas') renderCuotas();
+  if (v === 'config') renderConfig();
+}
+
+// ─── FORMAT ───────────────────────────────────────────────────
+function fmt(n) { return '$' + Math.round(n).toLocaleString('es-CL'); }
+function fmtDate(iso) {
+  const d = new Date(iso + 'T12:00:00');
+  return d.toLocaleDateString('es-CL', {day:'numeric', month:'short'});
+}
+const MES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MES_C = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+// ─── HOME ─────────────────────────────────────────────────────
+function renderHome() {
+  const now = new Date();
+  document.getElementById('home-date').textContent = now.toLocaleDateString('es-CL', {weekday:'long', day:'numeric', month:'long'});
+
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const gastosThisMonth = S.gastos.filter(g => g.fecha.startsWith(currentMonth));
+  const totalTC = gastosThisMonth.filter(g => g.tarjeta === 'tc').reduce((s,g) => s + g.monto, 0);
+  const totalDB = gastosThisMonth.filter(g => g.tarjeta === 'db').reduce((s,g) => s + g.monto, 0);
+  const totalMes = gastosThisMonth.reduce((s,g) => s + g.monto, 0);
+
+  // Cuotas que caen este mes
+  const cuotasEsteMes = S.cuotas.reduce((s,c) => {
+    const remaining = c.nCuotas - c.cuotaAct + 1;
+    if (remaining > 0) return s + c.montoCuota;
+    return s;
+  }, 0);
+
+  const proyFact = totalTC + cuotasEsteMes;
+  const disponible = S.saldoDebito - proyFact;
+
+  // Hero
+  const heroEl = document.getElementById('hero-disponible');
+  heroEl.textContent = fmt(disponible);
+  heroEl.className = 'hero-amount' + (disponible < 0 ? ' danger' : disponible < S.saldoDebito * 0.2 ? ' warn' : '');
+
+  document.getElementById('pill-saldo').textContent = fmt(S.saldoDebito);
+  document.getElementById('pill-tc').textContent = fmt(proyFact);
+
+  // Cierre
+  const cierre = new Date(now.getFullYear(), now.getMonth(), S.diaCierre);
+  if (cierre < now) cierre.setMonth(cierre.getMonth() + 1);
+  const dias = Math.round((cierre - now) / 86400000);
+  document.getElementById('pill-cierre').textContent = `${dias}d`;
+
+  // Stats
+  document.getElementById('stat-mes').textContent = fmt(totalMes);
+  document.getElementById('stat-mes-sub').textContent = `de ${fmt(S.presupuestoTotal)} presupuestado`;
+  document.getElementById('stat-factura').textContent = fmt(proyFact);
+  document.getElementById('stat-factura-sub').textContent = `incluye ${fmt(cuotasEsteMes)} en cuotas`;
+
+  // Facturación
+  document.getElementById('factura-total').textContent = fmt(proyFact);
+  document.getElementById('fac-gastos').textContent = fmt(totalTC);
+  document.getElementById('fac-cuotas').textContent = fmt(cuotasEsteMes);
+
+  // Recent
+  const recent = [...S.gastos].sort((a,b) => b.fecha.localeCompare(a.fecha)).slice(0, 8);
+  const cat = id => CATS.find(c => c.id === id) || CATS[11];
+  document.getElementById('recent-title').textContent = recent.length ? 'Últimos gastos' : '';
+  document.getElementById('recent-list').innerHTML = recent.length
+    ? recent.map(g => {
+        const c = cat(g.cat);
+        const isCuota = g.cuota;
+        return `<div class="tx-item">
+          <div class="tx-icon" style="background:${c.color}22">${c.icon}</div>
+          <div class="tx-info">
+            <div class="tx-name">${g.desc}</div>
+            <div class="tx-meta">${fmtDate(g.fecha)} · ${c.label}${isCuota ? ` · cuota ${g.cuota.n}/${g.cuota.total}` : ''} · <span class="tag ${g.tarjeta}">${g.tarjeta === 'tc' ? 'TC' : 'Débito'}</span></div>
+          </div>
+          <div class="tx-amount ${isCuota ? 'cuota' : ''}">${fmt(g.monto)}</div>
+        </div>`;
+      }).join('')
+    : `<div class="empty"><div class="empty-icon">💳</div><div class="empty-title">Sin gastos registrados</div><div class="empty-sub">Toca el botón para agregar tu primer gasto</div></div>`;
+}
+
+// ─── GASTOS VIEW ──────────────────────────────────────────────
+function renderGastos() {
+  const yr = viewMonth.getFullYear(), mo = viewMonth.getMonth();
+  document.getElementById('month-label').textContent = `${MES[mo].charAt(0).toUpperCase()+MES[mo].slice(1)} ${yr}`;
+  const key = `${yr}-${String(mo+1).padStart(2,'0')}`;
+  const gastosM = S.gastos.filter(g => g.fecha.startsWith(key));
+
+  const bycat = {};
+  CATS.forEach(c => { bycat[c.id] = 0; });
+  gastosM.forEach(g => { bycat[g.cat] = (bycat[g.cat]||0) + g.monto; });
+
+  const html = CATS.filter(c => (bycat[c.id]||0) > 0 || S.budgets[c.id] > 0).map(c => {
+    const spent = bycat[c.id] || 0;
+    const budget = S.budgets[c.id] || 0;
+    const pct = budget > 0 ? Math.min(spent / budget * 100, 100) : 0;
+    const color = pct >= 100 ? '#ff4d6d' : pct >= 80 ? '#ffd166' : c.color;
+    return `<div class="budget-item">
+      <div class="budget-top">
+        <div class="budget-icon">${c.icon}</div>
+        <div class="budget-name">${c.label}</div>
+        <div class="budget-amounts">${budget > 0 ? `<span>${fmt(spent)}</span> / ${fmt(budget)}` : `<span>${fmt(spent)}</span>`}</div>
+      </div>
+      ${budget > 0 ? `<div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${color}"></div></div>` : ''}
+    </div>`;
+  }).join('');
+
+  document.getElementById('budget-list').innerHTML = html ||
+    `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Sin gastos este mes</div><div class="empty-sub">Configura presupuestos en Ajustes</div></div>`;
+}
+
+function changeMonth(d) {
+  viewMonth.setMonth(viewMonth.getMonth() + d);
+  renderGastos();
+}
+
+// ─── CUOTAS VIEW ──────────────────────────────────────────────
+function renderCuotas() {
+  const html = S.cuotas.length
+    ? S.cuotas.map(c => {
+        const remaining = c.nCuotas - c.cuotaAct + 1;
+        const pct = (c.cuotaAct - 1) / c.nCuotas * 100;
+        return `<div class="cuota-item">
+          <div class="cuota-item-top">
+            <div>
+              <div class="cuota-item-name">${c.nombre}</div>
+              <div class="cuota-item-date">Desde ${fmtDate(c.fecha)}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="cuota-badge">${fmt(c.montoCuota)}/mes</div>
+              <button class="delete-btn" onclick="deleteCuota('${c.id}')">✕</button>
+            </div>
+          </div>
+          <div class="cuota-progress-row">
+            <div class="cuota-progress-label">Progreso</div>
+            <div class="cuota-progress-val">Cuota ${c.cuotaAct} de ${c.nCuotas}</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:var(--y)"></div></div>
+          <div class="cuota-next">Aún debes <strong>${fmt(remaining * c.montoCuota)}</strong> en ${remaining} cuota${remaining>1?'s':''}</div>
+        </div>`;
+      }).join('')
+    : `<div class="empty"><div class="empty-icon">💳</div><div class="empty-title">Sin cuotas activas</div><div class="empty-sub">Activa "compra en cuotas" al registrar un gasto</div></div>`;
+
+  document.getElementById('cuotas-list').innerHTML = html;
+}
+
+function deleteCuota(id) {
+  S.cuotas = S.cuotas.filter(c => c.id !== id);
+  save();
+  renderCuotas();
+  renderHome();
+  showToast('Cuota eliminada');
+}
+
+// ─── CONFIG VIEW ──────────────────────────────────────────────
+function renderConfig() {
+  document.getElementById('cfg-saldo').value = S.saldoDebito > 0 ? S.saldoDebito.toLocaleString('es-CL') : '';
+  document.getElementById('cfg-cierre').value = S.diaCierre;
+  document.getElementById('cfg-presupuesto').value = S.presupuestoTotal > 0 ? S.presupuestoTotal.toLocaleString('es-CL') : '';
+
+  document.getElementById('budget-config-list').innerHTML = CATS.map(c => `
+    <div class="budget-config-item">
+      <div class="bci-icon">${c.icon}</div>
+      <div class="bci-name">${c.label}</div>
+      <input class="bci-input" type="text" inputmode="numeric" placeholder="0"
+        value="${S.budgets[c.id] > 0 ? S.budgets[c.id].toLocaleString('es-CL') : ''}"
+        onchange="updateBudget('${c.id}', this.value)">
+    </div>`).join('');
+}
+
+function parseCLP(v) { return parseInt(String(v).replace(/\./g,'').replace(/,/g,'')) || 0; }
+
+function updateSaldo(v) { S.saldoDebito = parseCLP(v); save(); renderHome(); }
+function updateCierre(v) { S.diaCierre = parseInt(v) || 20; save(); renderHome(); }
+function updatePresupuesto(v) { S.presupuestoTotal = parseCLP(v); save(); }
+function updateBudget(id, v) { S.budgets[id] = parseCLP(v); save(); }
+
+// ─── ADD MODAL ────────────────────────────────────────────────
+let selCat = 'comida';
+
+function buildCatGrid() {
+  document.getElementById('cat-grid').innerHTML = CATS.map(c =>
+    `<div class="cat-opt ${c.id === selCat ? 'sel' : ''}" onclick="selectCat('${c.id}')">
+      <div class="cat-opt-icon">${c.icon}</div>
+      <div class="cat-opt-label">${c.label}</div>
+    </div>`).join('');
+}
+
+function selectCat(id) {
+  selCat = id;
+  buildCatGrid();
+}
+
+function openModal() {
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('inp-monto').value = '';
+  document.getElementById('inp-desc').value = '';
+  document.getElementById('inp-ncuotas').value = '';
+  document.getElementById('inp-cuota-actual').value = '1';
+  document.getElementById('tog-cuota').checked = false;
+  document.getElementById('cuota-config').classList.remove('show');
+  document.getElementById('amount-display').textContent = '$0';
+  selCat = 'comida';
+  buildCatGrid();
+  setTimeout(() => document.getElementById('inp-monto').focus(), 300);
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function handleOverlayClick(e) { if (e.target.id === 'modal') closeModal(); }
+
+function updateAmountDisplay(v) {
+  const n = parseInt(v) || 0;
+  document.getElementById('amount-display').textContent = fmt(n);
+}
+
+function toggleCuota(on) {
+  document.getElementById('cuota-config').classList.toggle('show', on);
+}
+
+function saveGasto() {
+  const monto = parseInt(document.getElementById('inp-monto').value) || 0;
+  const desc = document.getElementById('inp-desc').value.trim() || 'Gasto';
+  const tarjeta = document.getElementById('inp-tarjeta').value;
+  const isCuota = document.getElementById('tog-cuota').checked;
+  const ncuotas = parseInt(document.getElementById('inp-ncuotas').value) || 1;
+  const cuotaAct = parseInt(document.getElementById('inp-cuota-actual').value) || 1;
+
+  if (!monto) { showToast('Ingresa un monto'); return; }
+
+  const now = new Date();
+  const fecha = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const id = Date.now().toString();
+
+  const gasto = { id, fecha, desc, cat: selCat, monto, tarjeta };
+  if (isCuota && ncuotas > 1) {
+    gasto.cuota = { n: cuotaAct, total: ncuotas };
+    gasto.monto = Math.round(monto); // monto = valor de ESTA cuota
+
+    // Registrar en cuotas activas si hay cuotas restantes
+    const remaining = ncuotas - cuotaAct;
+    if (remaining > 0) {
+      S.cuotas.push({
+        id: id + '_c', nombre: desc, montoTotal: monto * ncuotas,
+        cuotaAct: cuotaAct + 1, nCuotas: ncuotas, montoCuota: monto, fecha
+      });
+    }
+  }
+
+  S.gastos.push(gasto);
+  save();
+  closeModal();
+  renderHome();
+  showToast('Gasto guardado ✓');
+}
+
+// ─── EXPORT ───────────────────────────────────────────────────
+function exportJSON() {
+  const now = new Date();
+  const key = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const gastosM = S.gastos.filter(g => g.fecha.startsWith(key));
+  const catName = id => CATS.find(c => c.id === id)?.label || id;
+
+  const txs = gastosM.map(g => ({
+    fecha: g.fecha,
+    año: parseInt(g.fecha.split('-')[0]),
+    mes: parseInt(g.fecha.split('-')[1]),
+    descripcion: g.desc,
+    canal: g.tarjeta === 'tc' ? 'TC' : 'DEBITO',
+    cargo: g.monto,
+    abono: 0,
+    categoria: catName(g.cat),
+    fuente: 'pwa'
+  }));
+
+  const blob = new Blob([JSON.stringify({transactions: txs}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `gastos_pwa_${key}.json`;
+  a.click();
+  showToast(`${txs.length} gastos exportados`);
+}
+
+function resetMonth() {
+  if (!confirm('¿Cerrar el mes actual y archivar los gastos?')) return;
+  const now = new Date();
+  const key = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const archive = S.gastos.filter(g => g.fecha.startsWith(key));
+  S.archivedMonths.push({month: key, gastos: archive});
+  S.gastos = S.gastos.filter(g => !g.fecha.startsWith(key));
+  // Advance cuotas by 1
+  S.cuotas = S.cuotas.map(c => ({...c, cuotaAct: c.cuotaAct + 1})).filter(c => c.cuotaAct <= c.nCuotas);
+  save();
+  renderHome();
+  showToast('Mes cerrado y archivado');
+}
+
+// ─── TOAST ────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── INIT ─────────────────────────────────────────────────────
+renderHome();
+buildCatGrid();
+</script>
+</body>
+</html>
