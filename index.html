@@ -135,7 +135,29 @@ body { background: var(--bg); color: var(--txt); font-family: var(--sans); min-h
   </div>
   <div class="inst-grid" id="inst-grid"></div>
   <div class="form-box">
-    <div class="form-title">Registrar actualizacion</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+      <div class="form-title" style="margin:0">Registrar actualizacion</div>
+      <button class="btn sec" onclick="toggleNuevoInst()" style="font-size:11px;padding:6px 14px">+ Nuevo instrumento</button>
+    </div>
+    <div id="nuevo-panel" style="display:none;background:#1e2535;border:1px solid #2a3347;border-radius:10px;padding:16px;margin-bottom:16px">
+      <div style="font-family:var(--mono);font-size:9px;color:#3d4d68;text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px">Crear nuevo instrumento</div>
+      <div class="form-row r3">
+        <div><label class="f-lbl">Nombre</label><input class="f-inp" type="text" id="ni-nombre" placeholder="Ej: Educacion, Bitcoin"></div>
+        <div><label class="f-lbl">Descripcion / proposito</label><input class="f-inp" type="text" id="ni-purpose" placeholder="Ej: Fondo educacion hijos"></div>
+        <div><label class="f-lbl">Color</label>
+          <select class="f-inp" id="ni-color">
+            <option value="#06b6d4">Celeste</option>
+            <option value="#10b981">Verde esmeralda</option>
+            <option value="#f97316">Naranja</option>
+            <option value="#ec4899">Rosa</option>
+            <option value="#64748b">Gris</option>
+            <option value="#84cc16">Lima</option>
+            <option value="#e879f9">Violeta</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn" onclick="crearInstrumento()" style="font-size:12px;padding:8px 18px">Crear instrumento</button>
+    </div>
     <div class="form-row r3">
       <div>
         <label class="f-lbl">Instrumento</label>
@@ -641,14 +663,15 @@ function renderHistorial() {
         + '<td style="color:' + (gan >= 0 ? '#4ade80' : '#f87171') + '">' + (gan >= 0 ? '+' : '') + fmt(gan) + '</td>'
         + '<td><span class="ic-badge ' + (pct >= 0 ? 'g' : 'r') + '" style="font-size:10px">' + fmtP(pct) + '</span></td>'
         + '<td style="color:#3d4d68">' + extra + '</td>'
-        + '<td><button class="del" onclick="delReg(' + realIdx + ')">x</button></td>'
+        + '<td><button class="del" onclick="delReg(this)" data-idx="' + realIdx + '">Eliminar</button></td>'
         + '</tr>';
     }
   }
   document.getElementById('hist-body').innerHTML = html;
 }
 
-function delReg(i) {
+function delReg(btn) {
+  var i = parseInt(btn.getAttribute('data-idx'));
   if (!confirm('Eliminar este registro?')) return;
   S.reg.splice(i, 1);
   saveS();
@@ -738,6 +761,65 @@ function guardarMeta() {
   toast('Meta guardada');
 }
 
+function toggleNuevoInst() {
+  var p = document.getElementById('nuevo-panel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+function crearInstrumento() {
+  var nombre = document.getElementById('ni-nombre').value.trim();
+  var purpose = document.getElementById('ni-purpose').value.trim();
+  var color = document.getElementById('ni-color').value;
+  if (!nombre) { toast('Ingresa un nombre'); return; }
+  var id = nombre.toLowerCase().replace(/[^a-z0-9]/g, '_').slice(0, 20) + '_' + Date.now().toString(36);
+  CFG[id] = { name: nombre, purpose: purpose || nombre, color: color };
+  saveCFG();
+  rebuildSelects();
+  document.getElementById('ni-nombre').value = '';
+  document.getElementById('ni-purpose').value = '';
+  document.getElementById('nuevo-panel').style.display = 'none';
+  renderResumen();
+  toast('Instrumento "' + nombre + '" creado');
+}
+
+function saveCFG() {
+  var custom = {};
+  var defaultIds = ['parachutes','ahorro','vacaciones','apv','dolares','acciones'];
+  var ids = Object.keys(CFG);
+  for (var i = 0; i < ids.length; i++) {
+    if (defaultIds.indexOf(ids[i]) === -1) custom[ids[i]] = CFG[ids[i]];
+  }
+  localStorage.setItem('inv4_cfg', JSON.stringify(custom));
+}
+
+function loadCFG() {
+  try {
+    var raw = localStorage.getItem('inv4_cfg');
+    if (!raw) return;
+    var custom = JSON.parse(raw);
+    var ids = Object.keys(custom);
+    for (var i = 0; i < ids.length; i++) CFG[ids[i]] = custom[ids[i]];
+  } catch(e) {}
+}
+
+function rebuildSelects() {
+  var ids = Object.keys(CFG);
+  var selects = ['f-inst','hist-filter','m-inst'];
+  var defaultIds = ['parachutes','ahorro','vacaciones','apv','dolares','acciones'];
+  for (var s = 0; s < selects.length; s++) {
+    var sel = document.getElementById(selects[s]);
+    if (!sel) continue;
+    var current = sel.value;
+    var html = '';
+    if (selects[s] === 'hist-filter') html += '<option value="all">Todos</option>';
+    for (var i = 0; i < ids.length; i++) {
+      html += '<option value="' + ids[i] + '">' + CFG[ids[i]].name + '</option>';
+    }
+    sel.innerHTML = html;
+    if (current) sel.value = current;
+  }
+}
+
 function toast(msg) {
   var el = document.getElementById('toast');
   el.textContent = msg;
@@ -757,6 +839,8 @@ document.getElementById('f-fecha').value = yy + '-' + mm + '-' + dd;
 document.getElementById('hdr-date').textContent = now.toLocaleDateString('es-CL', {
   weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
 });
+loadCFG();
+rebuildSelects();
 updateSub();
 renderResumen();
 </script>
